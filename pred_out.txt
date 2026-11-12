@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriYield AI</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">
+      <span>🌾</span> AgriYield
+      <span style="color:#6b7280;font-weight:400;font-size:0.9rem">AI</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/" class="">Home</a>
+      <a href="/eda" class="">EDA</a>
+      <a href="/predict" class="active">Predict</a>
+      <a href="/comparison" class="">Models</a>
+      <a href="/about" class="">About</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+
+      
+      <section class="page-header">
+        <h1>🔮 Real-Time Yield Prediction</h1>
+        <p>Adjust field conditions and get an instant AI-powered yield forecast</p>
+      </section>
+
+      
+        
+        <div class="alert alert-err">⚠️ Exception encountered when calling Lambda.call().
+
+[1mWe could not automatically infer the shape of the Lambda&#39;s output. Please specify the `output_shape` argument for this Lambda layer.[0m
+
+Arguments received by Lambda.call():
+  • args=([&#39;&lt;KerasTensor shape=(None, 64), dtype=float32, sparse=False, ragged=False, name=keras_tensor_55&gt;&#39;, &#39;&lt;KerasTensor shape=(None, 64), dtype=float32, sparse=False, ragged=False, name=keras_tensor_57&gt;&#39;],)
+  • kwargs={&#39;mask&#39;: [&#39;None&#39;, &#39;None&#39;]}</div>
+        
+      
+
+      <form method="POST" action="/predict">
+        <div class="predict-grid">
+          <section class="form-card fade-up">
+            <h3>🌦 Weather Parameters</h3>
+
+            <div class="form-group">
+              <label>Total Rainfall (mm) <span id="v-rainfall">400</span></label>
+              <input type="range" name="rainfall" min="100" max="800" value="400" oninput="document.getElementById('v-rainfall').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Max Temp (°C) <span id="v-tmax">28</span></label>
+              <input type="range" name="temp_max" min="15" max="40" value="28" oninput="document.getElementById('v-tmax').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Min Temp (°C) <span id="v-tmin">18</span></label>
+              <input type="range" name="temp_min" min="5" max="30" value="18" oninput="document.getElementById('v-tmin').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Humidity (%) <span id="v-hum">65</span></label>
+              <input type="range" name="humidity" min="20" max="100" value="65" oninput="document.getElementById('v-hum').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Solar Radiation (MJ/m²) <span id="v-sol">18</span></label>
+              <input type="range" name="solar_rad" min="5" max="30" value="18" oninput="document.getElementById('v-sol').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Soil Moisture <span id="v-soil">0.35</span></label>
+              <input type="range" name="soil_moist" min="0.1" max="0.6" step="0.01" value="0.35" oninput="document.getElementById('v-soil').textContent=this.value">
+            </div>
+          </section>
+
+          <section class="form-card fade-up">
+            <h3>🛰 Vegetation &amp; Crop</h3>
+
+            <div class="form-group">
+              <label for="crop-select">Crop Type</label>
+              <select name="crop_type" id="crop-select" onchange="updateCropImg(this.value)">
+                
+                <option value="Wheat" selected>
+                  🌾 Wheat
+                </option>
+                
+                <option value="Rice" >
+                  🍚 Rice
+                </option>
+                
+                <option value="Maize" >
+                  🌽 Maize
+                </option>
+                
+                <option value="Soybean" >
+                  🌱 Soybean
+                </option>
+                
+                <option value="Potato" >
+                  🥔 Potato
+                </option>
+                
+                <option value="Tomato" >
+                  🍅 Tomato
+                </option>
+                
+                <option value="Sunflower" >
+                  🌻 Sunflower
+                </option>
+                
+                <option value="Sugarcane" >
+                  🎋 Sugarcane
+                </option>
+                
+                <option value="Onion" >
+                  🧅 Onion
+                </option>
+                
+                <option value="Chickpea" >
+                  🫘 Chickpea
+                </option>
+                
+              </select>
+            </div>
+
+            <div style="height:140px;border-radius:10px;overflow:hidden;margin-bottom:1.25rem">
+              <img
+                src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80"
+                id="crop-preview"
+                alt="Selected crop preview"
+                style="width:100%;height:100%;object-fit:cover;filter:brightness(0.6);transition:opacity 0.4s"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Peak NDVI <span id="v-pndvi">0.65</span></label>
+              <input type="range" name="peak_ndvi" min="0.2" max="0.9" step="0.01" value="0.65" oninput="document.getElementById('v-pndvi').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Mean NDVI <span id="v-mndvi">0.45</span></label>
+              <input type="range" name="mean_ndvi" min="0.1" max="0.8" step="0.01" value="0.45" oninput="document.getElementById('v-mndvi').textContent=this.value">
+            </div>
+
+            <button type="submit" class="btn-predict" style="margin-top:1rem">🌾 Predict Yield</button>
+          </section>
+        </div>
+      </form>
+
+      <script>
+        const cropImgs = {
+          'Wheat':     'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80',
+          'Rice':      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80',
+          'Maize':     'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=600&q=80',
+          'Soybean':   'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=600&q=80',
+          'Potato':    'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80',
+          'Tomato':    'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=600&q=80',
+          'Sunflower': 'https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=600&q=80',
+          'Sugarcane': 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
+          'Onion':     'https://images.unsplash.com/photo-1508747703725-719777637510?w=600&q=80',
+          'Chickpea':  'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?w=600&q=80'
+        };
+        function updateCropImg(name) {
+          const img = document.getElementById('crop-preview');
+          if (!img || !cropImgs[name]) return;
+          img.style.opacity = '0';
+          setTimeout(() => { img.src = cropImgs[name]; img.style.opacity = '1'; }, 200);
+        }
+      </script>
+
+      
+
+    </div>
+  </main>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

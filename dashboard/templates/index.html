@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriYield AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">
+      <span>🌾</span> AgriYield
+      <span style="color:#6b7280;font-weight:400;font-size:0.9rem">AI</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/" class="{{ 'active' if page == 'home' else '' }}">Home</a>
+      <a href="/eda" class="{{ 'active' if page == 'eda' else '' }}">EDA</a>
+      <a href="/predict" class="{{ 'active' if page == 'predict' else '' }}">Predict</a>
+      <a href="/comparison" class="{{ 'active' if page == 'comparison' else '' }}">Models</a>
+      <a href="/about" class="{{ 'active' if page == 'about' else '' }}">About</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+
+      {% if page == 'home' %}
+      <section class="hero fade-up">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-badge">🛰 AI-Powered · CNN-LSTM Fusion</div>
+          <h1>Predict <em>Crop Yield</em><br />from Satellite + Weather</h1>
+          <p>Deep learning fusion of multispectral imagery and weather time-series to forecast yield in tons per hectare.</p>
+        </div>
+      </section>
+
+      {% if stats %}
+      <section class="stats-grid">
+        <div class="stat-card fade-up">
+          <div class="stat-icon">🌍</div>
+          <div class="stat-value">{{ stats.total_fields }}</div>
+          <div class="stat-label">Total Fields</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">{{ stats.avg_yield }}</div>
+          <div class="stat-label">Avg Yield (t/ha)</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-icon">🔝</div>
+          <div class="stat-value">{{ stats.max_yield }}</div>
+          <div class="stat-label">Max Yield (t/ha)</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-icon">📉</div>
+          <div class="stat-value">{{ stats.min_yield }}</div>
+          <div class="stat-label">Min Yield (t/ha)</div>
+        </div>
+      </section>
+      {% endif %}
+
+      <section>
+        <div class="section-title">🌱 Supported Crops</div>
+        <div class="crops-grid" style="grid-template-columns:repeat(5,1fr)">
+          {% set img_map = {
+            'Maize':   'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=600&q=80',
+            'Rice':    '/static/images/sreehari-devadas-WDI95CIPW00-unsplash.jpg',
+            'Wheat':   'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80',
+            'Soybean': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=600&q=80',
+            'Sorghum': 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80',
+            'Potato':  'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80'
+          } %}
+          {% set desc_map = {
+            'Maize':   'High-yield C4 crop. Solar radiation drives productivity.',
+            'Rice':    'Warm-season staple. High water demand, NDVI peaks at panicle stage.',
+            'Wheat':   'Cool-season cereal. Sensitive to heat stress during grain fill.',
+            'Soybean': 'Nitrogen-fixing legume. Thrives in warm, well-drained soils.',
+            'Sorghum': 'Drought-tolerant cereal. Thrives in semi-arid conditions.',
+            'Potato':  'Root vegetable. Needs cool temps and consistent soil moisture.'
+          } %}
+          {% for name, info in (crops|default({})).items() %}
+          <article class="crop-card fade-up">
+            <div class="crop-img">
+              <img src="{{ img_map[name] }}" alt="{{ name }}" loading="lazy"/>
+              <div class="crop-img-overlay"></div>
+            </div>
+            <div class="crop-body">
+              <div class="crop-name">{{ info.emoji }} {{ name }}</div>
+              <div class="crop-yield">Base: {{ info.base }} t/ha</div>
+              <div class="crop-desc">{{ desc_map[name] }}</div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">🧠 Model Architecture</div>
+        <div class="chart-card fade-up" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center">
+          <div>
+            <div style="font-size:2rem;margin-bottom:8px">🛰</div>
+            <div style="font-weight:700;color:var(--green)">CNN Branch</div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">
+              TimeDistributed ResNet CNN<br />
+              → BiLSTM (256-dim)<br />
+              → 128-dim projection
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+            <div style="font-size:1.5rem">⚡</div>
+            <div style="font-weight:700;color:var(--amber)">Soft Attention</div>
+            <div style="font-size:0.8rem;color:var(--muted)">
+              Softmax gating<br />
+              over CNN + LSTM
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:2rem;margin-bottom:8px">🌦</div>
+            <div style="font-weight:700;color:#60a5fa">LSTM Branch</div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">
+              Stacked BiLSTM<br />
+              → Weather encoding<br />
+              → 128-dim projection
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {% elif page == 'eda' %}
+      <div id="eda-data" data-json='{{ data|default("{}")|safe }}' hidden></div>
+
+      <section class="page-header">
+        <h1>📊 Exploratory Data Analysis</h1>
+        <p>Seasonal NDVI trends, weather correlations, and yield distributions</p>
+      </section>
+
+      {% if data|default('{}') == '{}' %}
+      <div class="alert alert-warn">⚠️ Run <code>python src/data_preprocessing.py</code> first.</div>
+      {% else %}
+      <section class="chart-card fade-up">
+        <h3>🌿 Seasonal NDVI Trend (mean ± 1 std)</h3>
+        <div class="chart-wrap"><canvas id="ndviChart"></canvas></div>
+      </section>
+
+      <section style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem">
+        <div class="chart-card fade-up">
+          <h3>🌾 Average Yield by Crop</h3>
+          <div class="chart-wrap" style="height:300px;position:relative"><canvas id="yieldChart"></canvas></div>
+        </div>
+
+        <div class="chart-card fade-up">
+          <h3>🌡 Weather–Yield Correlation</h3>
+          <div style="display:flex;justify-content:center;overflow:auto;min-height:320px">
+            <canvas id="corrChart" style="max-width:100%;height:auto"></canvas>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
+      {% elif page == 'predict' %}
+      <section class="page-header">
+        <h1>🔮 Real-Time Yield Prediction</h1>
+        <p>Adjust field conditions and get an instant AI-powered yield forecast</p>
+      </section>
+
+      {% if result|default(None) %}
+        {% if result.error %}
+        <div class="alert alert-err">⚠️ {{ result.error }}</div>
+        {% else %}
+        <section class="result-card">
+          <div style="font-size:0.85rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">
+            {{ result.emoji }} {{ result.crop }} — Predicted Yield
+          </div>
+          <div class="result-value">{{ result.yield }}</div>
+          <div class="result-unit">tons per hectare</div>
+          <div class="result-std">± {{ result.std }} t/ha confidence interval</div>
+        </section>
+        {% endif %}
+      {% endif %}
+
+      <form method="POST" action="/predict">
+        <div class="predict-grid">
+          <section class="form-card fade-up">
+            <h3>🌦 Weather Parameters</h3>
+
+            <div class="form-group">
+              <label>Total Rainfall (mm) <span id="v-rainfall">{{ (form|default({})). get('rainfall', '400') }}</span></label>
+              <input type="range" name="rainfall" min="100" max="800" value="{{ (form|default({})).get('rainfall', '400') }}" oninput="document.getElementById('v-rainfall').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Max Temp (°C) <span id="v-tmax">{{ (form|default({})).get('temp_max', '28') }}</span></label>
+              <input type="range" name="temp_max" min="15" max="40" value="{{ (form|default({})).get('temp_max', '28') }}" oninput="document.getElementById('v-tmax').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Min Temp (°C) <span id="v-tmin">{{ (form|default({})).get('temp_min', '18') }}</span></label>
+              <input type="range" name="temp_min" min="5" max="30" value="{{ (form|default({})).get('temp_min', '18') }}" oninput="document.getElementById('v-tmin').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Avg Humidity (%) <span id="v-hum">{{ (form|default({})).get('humidity', '65') }}</span></label>
+              <input type="range" name="humidity" min="20" max="100" value="{{ (form|default({})).get('humidity', '65') }}" oninput="document.getElementById('v-hum').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Solar Radiation (MJ/m²) <span id="v-sol">{{ (form|default({})).get('solar_rad', '18') }}</span></label>
+              <input type="range" name="solar_rad" min="5" max="30" value="{{ (form|default({})).get('solar_rad', '18') }}" oninput="document.getElementById('v-sol').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Soil Moisture <span id="v-soil">{{ (form|default({})).get('soil_moist', '0.35') }}</span></label>
+              <input type="range" name="soil_moist" min="0.1" max="0.6" step="0.01" value="{{ (form|default({})).get('soil_moist', '0.35') }}" oninput="document.getElementById('v-soil').textContent=this.value">
+            </div>
+          </section>
+
+          <section class="form-card fade-up">
+            <h3>🛰 Vegetation &amp; Crop</h3>
+
+            <div class="form-group">
+              <label for="crop-select">Crop Type</label>
+              <select name="crop_type" id="crop-select" onchange="updateCropImg(this.value)">
+                {% for name, info in (crops|default({})).items() %}
+                <option value="{{ name }}" {% if (form|default({})).get('crop_type', crops|list|first) == name %}selected{% endif %}>
+                  {{ info.emoji }} {{ name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div style="height:140px;border-radius:10px;overflow:hidden;margin-bottom:1.25rem">
+              <img
+                src="{{ cropImgs[(form|default({})).get('crop_type', 'Wheat')] if cropImgs is defined else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80' }}"
+                id="crop-preview"
+                alt="Selected crop preview"
+                style="width:100%;height:100%;object-fit:cover;filter:brightness(0.6);transition:opacity 0.4s"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Peak NDVI <span id="v-pndvi">{{ (form|default({})).get('peak_ndvi', '0.65') }}</span></label>
+              <input type="range" name="peak_ndvi" min="0.2" max="0.9" step="0.01" value="{{ (form|default({})).get('peak_ndvi', '0.65') }}" oninput="document.getElementById('v-pndvi').textContent=this.value">
+            </div>
+
+            <div class="form-group">
+              <label>Mean NDVI <span id="v-mndvi">{{ (form|default({})).get('mean_ndvi', '0.45') }}</span></label>
+              <input type="range" name="mean_ndvi" min="0.1" max="0.8" step="0.01" value="{{ (form|default({})).get('mean_ndvi', '0.45') }}" oninput="document.getElementById('v-mndvi').textContent=this.value">
+            </div>
+
+            <button type="submit" class="btn-predict" style="margin-top:1rem">🌾 Predict Yield</button>
+          </section>
+        </div>
+      </form>
+
+      <script>
+        const cropImgs = {
+          'Maize':   'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=600&q=80',
+          'Rice':    '/static/images/sreehari-devadas-WDI95CIPW00-unsplash.jpg',
+          'Wheat':   'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80',
+          'Soybean': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=600&q=80',
+          'Sorghum': 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80',
+          'Potato':  'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80'
+        };
+        function updateCropImg(name) {
+          const img = document.getElementById('crop-preview');
+          if (!img || !cropImgs[name]) return;
+          img.style.opacity = '0';
+          setTimeout(() => { img.src = cropImgs[name]; img.style.opacity = '1'; }, 200);
+        }
+        // Sync image with selected crop on page load
+        const sel = document.getElementById('crop-select');
+        if (sel) updateCropImg(sel.value);
+      </script>
+
+      {% elif page == 'comparison' %}
+      <div id="cmp-data" data-json='{{ data|default("{}")|safe }}' hidden></div>
+
+      <section class="page-header">
+        <h1>📈 Model Performance Comparison</h1>
+        <p>RMSE, MAE, and R² across all trained models</p>
+      </section>
+
+      {% if data|default('{}') == '{}' %}
+      <div class="alert alert-warn">⚠️ Run <code>python src/evaluate.py</code> first.</div>
+      {% else %}
+      <section style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <div class="chart-card fade-up">
+          <h3>📉 RMSE <span style="color:var(--muted);font-weight:400">(lower is better)</span></h3>
+          <div class="chart-wrap"><canvas id="rmseChart"></canvas></div>
+        </div>
+
+        <div class="chart-card fade-up">
+          <h3>📈 R² Score <span style="color:var(--muted);font-weight:400">(higher is better)</span></h3>
+          <div class="chart-wrap"><canvas id="r2Chart"></canvas></div>
+        </div>
+      </section>
+
+      <section class="chart-card fade-up">
+        <h3>📋 Full Results Table</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>RMSE</th>
+                <th>MAE</th>
+                <th>R²</th>
+                <th>sMAPE%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set ns = namespace(best_r2=-999, best_rmse=999) %}
+              {% for row in data_table %}
+                {% if row.R2 > ns.best_r2 %}{% set ns.best_r2 = row.R2 %}{% endif %}
+                {% if row.RMSE < ns.best_rmse %}{% set ns.best_rmse = row.RMSE %}{% endif %}
+              {% endfor %}
+
+              {% for row in data_table %}
+              <tr>
+                <td>{{ row.Model }}</td>
+                <td {% if row.RMSE == ns.best_rmse %}class="best"{% endif %}>{{ row.RMSE }}</td>
+                <td>{{ row.MAE }}</td>
+                <td {% if row.R2 == ns.best_r2 %}class="best"{% endif %}>{{ row.R2 }}</td>
+                <td>{{ row.get('sMAPE', '—') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      {% elif page == 'about' %}
+      <section class="about-hero fade-up">
+        <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1400&q=80" alt="Farm" />
+        <div class="about-hero-text">
+          <h1>AgriYield AI</h1>
+          <p>CNN-LSTM Fusion for Precision Agriculture</p>
+        </div>
+      </section>
+
+      <section class="about-grid">
+        <div class="about-card fade-up">
+          <h3>🧠 Model Architecture</h3>
+          <ul>
+            <li>TimeDistributed ResNet CNN → BiLSTM (256-dim)</li>
+            <li>Stacked BiLSTM for weather time-series (128-dim)</li>
+            <li>Soft attention gate (crop-conditioned softmax)</li>
+            <li>Dense head: 256 → 128 → 64 → 1 (yield t/ha)</li>
+          </ul>
+        </div>
+
+        <div class="about-card fade-up">
+          <h3>📦 Tech Stack</h3>
+          <ul>
+            <li>TensorFlow / Keras</li>
+            <li>scikit-learn · NumPy · Pandas</li>
+            <li>Flask · Chart.js</li>
+            <li>Matplotlib · Seaborn</li>
+          </ul>
+        </div>
+
+        <div class="about-card fade-up">
+          <h3>🌾 Dataset</h3>
+          <ul>
+            <li>1200 fields · 6 crops · 200 per crop</li>
+            <li>Real Sentinel-2: 5 bands + NDVI + EVI (7 channels)</li>
+            <li>Image patches: 32×32 px · 12 monthly timesteps</li>
+            <li>Weather: rainfall, temp, humidity, soil moisture + 2</li>
+          </ul>
+        </div>
+
+        <div class="about-card fade-up">
+          <h3>🏆 Models Compared</h3>
+          <ul>
+            <li>Standalone CNN (spatial only) — R²: 0.708</li>
+            <li>Standalone LSTM (weather only) — R²: 0.091</li>
+            <li>🏅 CNN-LSTM Fusion (proposed) — R²: 0.882</li>
+            <li>Random Forest — R²: 0.209 · SVR — R²: 0.181</li>
+          </ul>
+        </div>
+
+        <div class="about-card fade-up">
+          <h3>🌱 6 Trained Crops</h3>
+          <ul>
+            {% for name, info in (crops|default({})).items() %}
+            <li>{{ info.emoji }} {{ name }} — {{ info.base }} t/ha</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="about-card fade-up">
+          <h3>⚙️ Training Config</h3>
+          <ul>
+            <li>Epochs: 100 · Batch: 16</li>
+            <li>LR: 5e-4 cosine decay · Dropout: 0.25</li>
+            <li>Early stopping (patience 20)</li>
+            <li>L2 regularization: 1e-5 · Huber loss</li>
+          </ul>
+        </div>
+      </section>
+
+      {% else %}
+      <section class="page-header">
+        <h1>Page not found</h1>
+        <p>The requested section is unavailable.</p>
+      </section>
+      {% endif %}
+
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

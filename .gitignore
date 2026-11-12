@@ -1,0 +1,38 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+venv312/
+.venv/
+
+# Environment variables
+.env
+
+# Large processed data
+data/processed/
+data/sample/
+data/raw.zip
+
+# Trained models
+outputs/models/
+
+# Generated plots and results
+outputs/plots/
+outputs/results/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
