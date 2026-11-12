@@ -36,3 +36,4 @@ Thumbs.db
 
 # IDE
 .vscode/
+data/satellite_images/*.npy
